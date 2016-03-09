@@ -11,6 +11,7 @@ import java.util.ArrayList;
  *
  * @author Daniela Velasquez
  * @author David Ruiz
+ 233
  */
 public class Astar {
     private ArrayList<Nodo> openGeneral;
