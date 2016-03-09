@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rompecabezas;
+package AStar;
 
 import java.util.ArrayList;
 
@@ -11,120 +11,177 @@ import java.util.ArrayList;
  *
  * @author Daniela Velasquez
  * @author David Ruiz
- 233
  */
 public class Astar {
-    private ArrayList<Nodo> openGeneral;
-    private ArrayList<Nodo> close;
-    private int profundidadLimite;
-    private Nodo raiz,solucion;
-    
-    public Astar(Nodo raiz,Nodo solucion){
-        profundidadLimite = 10;
-        this.raiz = raiz;
-        this.solucion = solucion;
-        openGeneral = new ArrayList();
-        close = new ArrayList();
+	
+	/*
+	 * Astar Class. It has the A* algorithm.
+	 * */
+    private ArrayList<Node> openFull;
+    private ArrayList<Node> close;
+    private int depthLimit;
+    private Node root,goal;
+
+    /*
+     * Constructor. Initialize depth variable. In this case, the depth limit is 4.
+     * @param root Node root, the initial root to start the algorithm.
+     * @param goal Node goal, the ending or goal of the algorithm.
+     * */
+	public Astar(Node root,Node goal){
+    	depthLimit = 4;
+        this.root = root;
+        this.goal = goal;
+        openFull = new ArrayList<Node>();
+        close = new ArrayList<Node>();
     }
-    
-    public void encontrarCaminoParcial(){
-        Nodo x;
-        ArrayList<Nodo> open = new ArrayList();
-        open.add(raiz);
-        int profundidad = 0;
-        boolean fin=false;
-        ArrayList<Nodo> hijos;
-        while(!open.isEmpty() && !fin){
-            x = heuristica(open,profundidad);
-            borrar(open,x);
-            close.add(x);
-            if(x.equals(solucion)){
-                fin = true;                
+    /*
+     * Find 4 solutions nodes of the path.
+     * */
+    private void findPartialPath(){
+        Node selectedOpen;
+        ArrayList<Node> open = new ArrayList<Node>();
+        open.add(root);
+        int depth = 0;
+        boolean end=false;
+        ArrayList<Node> sons;
+        while(!open.isEmpty() && !end){
+        	selectedOpen = findSelectedNode(open,depth);
+            remove(open,selectedOpen);
+            close.add(selectedOpen);
+            if(selectedOpen.equals(goal)){
+            	end = true;                
             }
             else{
-                if(profundidad != profundidadLimite){
-                    hijos = x.getHijos();        
-                    profundidad++;
-                    if(!hijos.isEmpty()){    
-                        borrar(open,hijos);
-                        borrar(close,hijos);
-                        borrar(openGeneral,hijos);
-                        for(Nodo h: hijos){
-                            open.add(h);
+                if(depth != depthLimit){
+                	sons = selectedOpen.getChildren();       
+                    depth++;
+                    if(!sons.isEmpty()){    
+                        remove(open,sons);
+                        remove(close,sons);
+                        remove(openFull,sons);
+                        for(Node son: sons){
+                            open.add(son);
                         }
                     }
                 }
                 else{
-                    for(Nodo o : open){
-                        openGeneral.add(o);
+                    for(Node Node : open){
+                    	openFull.add(Node);
                     }
-                    fin = true;
+                    end = true;
                 }
             }
         }
     }
+    /*
+     * Find full path.
+     * */
     
-    public ArrayList<Nodo> encontrarCamino(){
-        int i = 1;
-        do{
-            encontrarCaminoParcial();
-            i++;
-            raiz = close.get(close.size()-1);
-        }while(!raiz.equals(solucion));            
-        return close;
-    }
-    
-    public Nodo heuristica(ArrayList<Nodo> v,int profundidad){
-        Nodo x;
-        int i;
-        for(i=0;i<v.size();i++){
-            x = v.get(i);
-            if(x.getValor()==-999999999)
-                calcularValor(profundidad,x);
+    public void findPath(){
+    	while(!root.equals(goal)){
+    		findPartialPath();
+            root = close.get(close.size()-1);
+            close.remove(close.size()-1);
         }
-        x=v.get(0);
-        for(i=1;i<v.size();i++){
-            if(x.getValor()<v.get(i).getValor())
-                x=v.get(i);
+    	close.add(root);
+    }
+    /*
+     *Print all nodes of the path. 
+     * */
+    public void printPath(){
+    	for(Node n: close){
+    		System.out.println(n);
+    	}
+    }
+    /*
+     * From array open (possibles son) select one for path.
+     * @param NodesOpen array of possibles sons.
+     * @param depth depth limit of algorithm.
+     * */
+    private Node findSelectedNode(ArrayList<Node> NodesOpen,int depth){
+        Node Node;
+        addHeuristic(NodesOpen,depth);
+        Node=NodesOpen.get(0);
+        for(int i=1;i<NodesOpen.size();i++){
+            if(Node.getValue()<NodesOpen.get(i).getValue())
+            	Node=NodesOpen.get(i);
         }
-        return x;
+        return Node;
     }
-    public void calcularValor(int p,Nodo i){
-        int v;
-        v = p*p*p + i.piezasCorrectas(solucion) + i.columnasCorrectas(solucion)+2*i.filasCorrectas(solucion) - i.getManhattan(solucion)+ i.getPiezaMedio();
-        i.setValor(v);
+    /*
+     * Add value to possibles sons.
+     * @param NodesOpen array of possibles sons.
+     * @param depth depth limit of algorithm.
+     * */
+    private void addHeuristic(ArrayList<Node> NodesOpen,int depth){
+    	Node Node;
+        for(int i=0;i<NodesOpen.size();i++){
+        	Node = NodesOpen.get(i);
+            if(Node.getValue()==-999999999)
+            	heuristic(depth,Node);
+        }
     }
-    
-    public void borrar(ArrayList<Nodo> oc,ArrayList<Nodo> hijos){
-        Nodo aux,aux2;
-        ArrayList<Integer> ind = new ArrayList();
-        for(int i = 0; i<hijos.size();i++){
-            aux = hijos.get(i);
-            for (Nodo oc1 : oc) {
-                aux2 = oc1;
-                if(aux.equals(aux2))
+    /*
+     * Heuristic function selected.
+     * @param depth depth limit of algorithm.
+     * @param Node each node, a possible son.
+     * */
+    private void heuristic(int depth,Node Node){
+        int value;
+        value = depth*depth*depth + Node.correctPieces(goal) + Node.correctColumns(goal)+2*Node.correctRows(goal) - Node.getManhattan(goal)+ Node.getMiddlePiece();
+        Node.setValue(value);
+    }
+    /*
+     * Remove duplicate sons of other fathers.
+     * @param Nodes array of possibles sons or the solution path.
+     * @param sons array of possibles sons from selected father.
+     * */
+    private void remove(ArrayList<Node> Nodes,ArrayList<Node> sons){
+        Node aux;
+        for(int i = 0; i<sons.size();i++){
+            aux = sons.get(i);
+            for (Node node : Nodes) {
+                if(aux.equals(node))
                 {
-                    ind.add(i);
+                	aux.setErased(true);
                 }
             }
         }
-        if(ind.size()>0){
-            for(Integer x : ind){
-                hijos.remove(x.intValue());
-            }
-        }
-    }
-    public void borrar(ArrayList<Nodo> oc,Nodo n){
-        int indice = -1;
-        Nodo aux;
+        ArrayList<Node> copy = new ArrayList<Node>();
         
-        for(int i=0;i<oc.size();i++){
-            aux = oc.get(i);
-            if(aux.equals(n))
-               indice = i;
+        for(Node son: sons){
+        	if(!son.isErased())
+        		copy.add(son);
         }
-        if(indice != -1)
-            oc.remove(indice);
+        sons.clear();
+        for(Node sonCopy: copy){
+        		sons.add(sonCopy);
+        }
+        copy.clear();
+        copy = null;
     }
-    
+    /*
+     * Remove one node from array nodes.
+     * @param nodes array of nodes.
+     * @param node node to erase.
+     * */
+    private void remove(ArrayList<Node> nodes,Node node){
+        int index = -1;
+        Node aux;
+        
+        for(int i=0;i<nodes.size();i++){
+            aux = nodes.get(i);
+            if(aux.equals(node))
+               index = i;
+        }
+        if(index != -1)
+            nodes.remove(index);
+    }
+    /*
+     * Returns the solution path.
+     * @return close full path.
+     * */
+    public ArrayList<Node> getPath(){
+    	return close;
+    }
 }

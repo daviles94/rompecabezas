@@ -3,66 +3,76 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package rompecabezas;
+package AStar;
 
 import java.util.ArrayList;
 
 /**
  *
- * @author Daniela
+ * @author Daniela Velasquez
+ * @author David Ruiz
  */
 public class Puzzle {
-    private int[][] tablero;
-
-    public Puzzle(int[][] tableroPadre) {
-        this.tablero = new int[3][3];
+	
+	/*
+	 * A puzzle is a board with current position pieces.
+	 * @param board matrix with numbers like image of board.
+	 * */
+    private int[][] board;
+    
+    /*
+     * Constructor
+     * @param board matrix with numbers like board.
+     * */
+    public Puzzle(int[][] board) {
+        this.board = new int[3][3];
         
         for(int i=0;i<3;i++){
             for(int j=0;j<3;j++){
-                this.tablero[i][j] = tableroPadre[i][j];
+                this.board[i][j] = board[i][j];
             }
         }
     }
     
-    public int[][] getTablero() {
-        return tablero;
+    public int[][] getBoard() {
+        return board;
     }
-    public void setTablero(int[][] tablero) {
-        this.tablero = tablero;
+    public void setboard(int[][] board) {
+        this.board = board;
     }
-    public boolean equals(Puzzle otro) {
-        int[][] tablerofinal = otro.getTablero();
+    public boolean equals(Puzzle other) {
+        int[][] otherBoard = other.getBoard();
         int i,j;
         for(i=0;i<3;i++)
             for(j=0;j<3;j++)
-                if(tablero[i][j]!=tablerofinal[i][j])
+                if(board[i][j]!=otherBoard[i][j])
                     return false;
         return true;
     }
-    public void cambiarPieza(int x1,int y1,int x2,int y2){
+    public void changePiece(int x1,int y1,int x2,int y2){
         int aux;
-        aux = tablero[x1][y1];
-        tablero[x1][y1] = tablero[x2][y2];
-        tablero[x2][y2] = aux;
+        aux = board[x1][y1];
+        board[x1][y1] = board[x2][y2];
+        board[x2][y2] = aux;
     }
     
-    public int npiezasCorrectas(Puzzle otro){
-        int[][] tablerofinal = otro.getTablero();
+    public int nCorrectPieces(Puzzle other){
+        int[][] otherBoard = other.getBoard();
         int i,j,n=0;
         for(i=0;i<3;i++)
             for(j=0;j<3;j++)
-                if(tablero[i][j]==tablerofinal[i][j])
+                if(board[i][j]==otherBoard[i][j])
                     n++;
         return n;
     }
     
-    public int ncolCorrectas(Puzzle otro){
-        int col,fil,ncol=0;
-        int[][] tablerofinal=otro.getTablero();
+    public int nCorrectColumns(Puzzle other){
+        int col,row,ncol=0;
+        int[][] otherBoard=other.getBoard();
         for(col=0;col<3;col++){
             int n=0;
-            for(fil=0;fil<3;fil++){
-                if(tablero[fil][col]==tablerofinal[fil][col])
+            for(row=0;row<3;row++){
+                if(board[row][col]==otherBoard[row][col])
                     n++;
                 if(n==3)
                     ncol++;
@@ -71,118 +81,125 @@ public class Puzzle {
         return ncol;
     }
     
-    public int nfilCorrectas(Puzzle otro){
-        int col,fil,nfil=0;
-        int[][] tablerofinal=otro.getTablero();
-        for(fil=0;fil<3;fil++){
+    public int nCorrectRows(Puzzle other){
+        int col,row,nrows=0;
+        int[][] otherBoard=other.getBoard();
+        for(row=0;row<3;row++){
             int n=0;
             for(col=0;col<3;col++){
-                if(tablero[fil][col]==tablerofinal[fil][col])
+                if(board[row][col]==otherBoard[row][col])
                     n++;
                 if(n==3)
-                    nfil++;
+                    nrows++;
             }
         }
-        return nfil;
+        return nrows;
     }
     
-    public int getColumna(int valor,int [][] fin){
+    public int getColumn(int value,int [][] fin){
         for(int i=0;i<3;i++){
             for(int j=0;j<3;j++){
-                if(fin[i][j]==valor)
+                if(fin[i][j]==value)
                     return j;
             }
         }
         return -1;
     }
-    public int getFila(int valor,int [][] fin){
+    public int getRow(int value,int [][] board){
         for(int i=0;i<3;i++){
             for(int j=0;j<3;j++){
-                if(fin[i][j]==valor)
+                if(board[i][j]==value)
                     return i;
             }
         }
         return -1;
     }
-    public int disManhattan(Puzzle sol){
+    public int disManhattan(Puzzle solution){
         int acc=0;
         for(int i=0;i<3;i++){
             for(int j=0;j<3;j++){
-                int valor = tablero[i][j];
-                int x=sol.getFila(valor, sol.getTablero());
+                int value = board[i][j];
+                int x=solution.getRow(value, solution.getBoard());
                 if(x==-1)
-                    throw new IllegalArgumentException("Ha ocurrido un error en las filas");
-                int y=sol.getColumna(valor, sol.getTablero());
+                    throw new IllegalArgumentException("An error happens in rows");
+                int y=solution.getColumn(value, solution.getBoard());
                 if(y==-1)
-                    throw new IllegalArgumentException("Ha ocurrido un error en las columnas");
+                    throw new IllegalArgumentException("An error happens in columns");
                 acc+=Math.abs(i-x)+Math.abs(j-y);
             }
         }
         return acc;
     }
     
-    public ArrayList<Puzzle> nextEstado(){
-        int col,fil;
-        boolean[] movimientos;
-        fil = getFila(0,tablero);
-        col = getColumna(0,tablero);
-        ArrayList<Puzzle> hijos = new ArrayList();
+    public ArrayList<Puzzle> nextState(){
+        int col,row;
+        boolean[] movements;
+        row = getRow(0,board);
+        col = getColumn(0,board);
+        ArrayList<Puzzle> children = new ArrayList<Puzzle>();
 
-        movimientos = getMovimientos(fil,col);
-        for(int x=0;x<4;x++){
-            if(movimientos[x]){
-                Puzzle hijo = new Puzzle(tablero);
-                switch(x){
-                    case 0:hijo.cambiarPieza(fil, col, fil-1, col);
+        movements = getMovements(row,col);
+        for(int movement=0;movement<4;movement++){
+            if(movements[movement]){
+                Puzzle son = new Puzzle(board);
+                switch(movement){
+                    case 0:son.changePiece(row, col, row-1, col);
                         break;
-                    case 1:hijo.cambiarPieza(fil, col, fil, col+1);
+                    case 1:son.changePiece(row, col, row, col+1);
                         break;
-                    case 2:hijo.cambiarPieza(fil, col, fil+1, col);
+                    case 2:son.changePiece(row, col, row+1, col);
                         break;
-                    case 3:hijo.cambiarPieza(fil, col, fil, col-1);
+                    case 3:son.changePiece(row, col, row, col-1);
                         break;
                 }
-                hijos.add(hijo);
+                children.add(son);
             }
         }
-        return hijos;
+        return children;
     }
     
-    public boolean[] getMovimientos(int fil,int col){
+    public boolean[] getMovements(int row,int col){
         boolean[] mov = new boolean[4];
-        mov[0] = fil != 0;
+        mov[0] = row != 0;
         mov[1] = col != 2;
-        mov[2]=fil != 2;
+        mov[2] = row != 2;
         mov[3] = col!= 0;
         return mov;
     }
-    /*
-    0=arriba
-    1=derecha
-    2=abajo
-    3=izquierda
+    /*   
+    0=up   
+    1=right
+    2=down
+    3=left
     */
     
-    public int enMedio(){
-        if(tablero[1][1]==0)
+    public int inMiddle(){
+        if(board[1][1]==0)
             return 1;
         else 
             return 0;
     }
     
-    public int[] getValoresCambiados(Puzzle otro){
-        int[][] otrot = otro.getTablero();
-        int[] valores = new int[2];
+    public int[] getChangedValues(Puzzle other){
+        int[][] otherBoard = other.getBoard();
+        int[] values = new int[2];
         for(int i=0;i<3;i++){
             for(int j=0;j<3;j++){
-                if(tablero[i][j]!=otrot[i][j]){
-                    valores[0]=tablero[i][j];
-                    valores[1]=otrot[i][j];
-                    return valores;                           
+                if(board[i][j]!=otherBoard[i][j]){
+                	values[0]=board[i][j];
+                	values[1]=otherBoard[i][j];
+                    return values;                           
                 }
             }
         }      
         return null;
+    }
+    
+    @Override
+    public String toString(){
+    	return board[0][0] +" ," + board[0][1] + " ," + board[0][2] + "\n" +
+    			board[1][0] +" ," + board[1][1] + " ," + board[1][2] + "\n" +
+    			board[2][0] +" ," + board[2][1] + " ," + board[2][2] + "\n";
     }
 }
 
