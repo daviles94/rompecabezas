@@ -15,6 +15,8 @@ Errores con la profundidad límite para encontrar el camino. Aparece una excepci
 
 David Ruiz Martin-Romo: 
 [github:daviles94/](https://github.com/daviles94/)
+Daniela Velásquez Aguilar
+[github:dveag92/](https://github.com/dveag92)
 
 ### License
 ```
